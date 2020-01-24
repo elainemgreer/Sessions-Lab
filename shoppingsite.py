@@ -49,7 +49,7 @@ def show_melon(melon_id):
     """
 
     melon = melons.get_by_id(melon_id)
-    print(melon)
+   
     return render_template("melon_details.html",
                            display_melon=melon)
 
@@ -61,26 +61,42 @@ def show_shopping_cart():
     # TODO: Display the contents of the shopping cart.
 
     # The logic here will be something like:
-    cart_dict = session["cart"]
+    cart_dict = session.get("cart", {})
+    print(cart_dict)
     # - get the cart dictionary from the session
     # - create a list to hold melon objects and a variable to hold the total
     #   cost of the order
     melon_list = []
-    total_cost = 0.00
+    order_total_cost = 0.00
     # - loop over the cart dictionary, and for each melon id:
-    for melon in cart_dict.keys():
-        melon_list.append(melon)
+    for melon_id, quantity in cart_dict.items():
+        # print(melon_id)
+
     #    - get the corresponding Melon object
+        melon = melons.get_by_id(melon_id)
+        print(melon)
+
+
     #    - compute the total cost for that type of melon
+        melon_cost = quantity * melon.price
+
     #    - add this to the order total
+        order_total_cost += melon_cost
+
     #    - add quantity and total cost as attributes on the Melon object
-    #    - add the Melon object to the list created above
+        melon.quantity = quantity
+        melon.cost = melon_cost
+
+    # - add the Melon object to the list created above
+        melon_list.append(melon)
+
     # - pass the total order cost and the list of Melon objects to the template
-    #
+
+    # melon objects / total order cost
     # Make sure your function can also handle the case wherein no cart has
     # been added to the session
 
-    return render_template("cart.html")
+    return render_template("cart.html", order_total_cost=order_total_cost, melon_list=melon_list)
 
 
 @app.route("/add_to_cart/<melon_id>")
@@ -102,15 +118,15 @@ def add_to_cart(melon_id):
 
     # - check if the desired melon id is the cart, and if not, put it in
     # - increment the count for that melon id by 1
-    session[melon_id] = session.get(melon_id, 0) + 1
+    session["cart"][melon_id] = session.get(melon_id, 0) + 1
 
-    print("cart")
+    # print("cart")
 
     # - flash a success message
     flash('Melon successfully added to cart!')
     # - redirect the user to the cart page
 
-    return redirect("/cart.html")
+    return redirect("/cart")
 
 
 @app.route("/login", methods=["GET"])
